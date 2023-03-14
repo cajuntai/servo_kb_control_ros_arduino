@@ -19,6 +19,7 @@ class HasObservers(object):
 
         self._event_observers = {}
         self._event_cache = {}
+        self._exclusive_classes = []
 
     def add_event_listener(self, event_type, observer):
         """
@@ -49,19 +50,15 @@ class HasObservers(object):
         :param String event_type: The event type that has been received.
         :param event: The event that has been received. (The data)
         """
-        # Notify observers.
+        self.notify(event_type, event)
+        self.notify("*", event)
+    
+    def notify(self, event_type, event):
         for fn in self._event_observers.get(event_type, []):
             try:
                 fn(self, event_type, event)
             except Exception as e:
-                print(e)
-                self._logger.exception('Exception in event handler for %s' % event_type, exc_info=True)
-
-        for fn in self._event_observers.get('*', []):
-            try:
-                fn(self, event_type, event)
-            except Exception as e:
-                print(e)
+                print(f"Exeception occured in {self.__module__}: ", e)
                 self._logger.exception('Exception in event handler for %s' % event_type, exc_info=True)
                 
     def on_event(self, event_type):
@@ -69,6 +66,15 @@ class HasObservers(object):
         :param String event_type: The event type to watch (or '*' to watch all events).
         :param observer: The callback to invoke when an event of the specified type is received.
         """
+        def decorator(fn):
+            if isinstance(event_type, list):  # Register multi-condition callbacks in one decorator
+                for n in event_type:
+                    self.add_event_listener(n, fn)
+            else:
+                self.add_event_listener(event_type, fn)
+        return decorator
+    
+    def on_event_exclusive(self, event_type):
         def decorator(fn):
             if isinstance(event_type, list):  # Register multi-condition callbacks in one decorator
                 for n in event_type:

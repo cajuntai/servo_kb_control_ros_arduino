@@ -6,7 +6,12 @@
  
  <!-- rosserial's serial node -->
   <node respawn="true" pkg="rosserial_python" name="serial_node" type="serial_node.py" output='screen'>
-    <param name="_port" type="string" value="/dev/arduino_uno1" />
-    <param name="_baud" value="57600" />
+    <param name="port" type="string" value="/dev/arduino_uno1" />
+    <param name="baud" value="57600" />
   </node>
+  
+ <!-- os_monitor node -->
+ <node pkg="os_monitor" name="os_monitor" type="os__monitor.py" output='screen'>
+    <rosparam file="$(find os_monitor)/config/config.yaml" command="load"/>
+ </node>
 </launch>

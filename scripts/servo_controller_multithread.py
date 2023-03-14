@@ -18,6 +18,9 @@ class ServoPublisher:
     
     def __init__(self, servo_num=1, key=[]):
         
+        # self._keyboarder = KeyboardReader()
+        # self._keyboarder._thread.start()
+        
         self._servo_num  = servo_num
         self._key        = key if key else ["w", "s"]
         self._idx        = servo_num - 1
@@ -30,6 +33,7 @@ class ServoPublisher:
         if strategy == "individual":
             @keyboarder.on_event(self._key)
             def execute_keyboard(_, _event_type, _event):
+                # print(self, self._key)
                 global idx
                 msg = Int16()
                 if _event == self._key[0]:
@@ -48,7 +52,7 @@ class ServoPublisher:
                     pulse_length = -20
                 msg.data = pulse_length
                 self._servo_angle_pub.publish(msg)
-                
+            
     def sigint_handler(self, signum, frame):
         print("SIGINT: Exiting program...")
         sys.exit(0)
@@ -57,7 +61,7 @@ class ServoPublisher:
 """ 
 NOTES:
    1. If multiple ServoPublishers are connected via the same key, this will cause all of them to publish together;
-      can be ignored by seeting queue_size to 1, but it's inefficient.'
+      can be ignored by seeting queue_sie to 1, but it's inefficient.'
 """
 
 if __name__ == "__main__":
@@ -65,12 +69,12 @@ if __name__ == "__main__":
     rospy.init_node(node_name)
     rospy.loginfo(f"{node_name} initiated")
     
-    # Initialize KeyboardReader class and register change servo function for events of 0 to 9.
     keyboarder = KeyboardReader()
+    keyboarder._thread.start()
     @keyboarder.on_event([str(_) for _ in list(range(10))])
     def execute_change_servo(self, _event_type, _event):
         try:
-            _event = int(_event)
+            _event = int(_event)  # Check if event is a number
             
             global publishers, idx
             if _event <= len(publishers) and _event > 0:
@@ -81,26 +85,23 @@ if __name__ == "__main__":
         except ValueError:
              pass
          
-    strategy = "individual"  # Only publishes servo controlled.
-    # strategy = "all"       # Publishes all servos at once.
+    strategy = "individual"  # Only executes when the servo is controlled
+    strategy = "all"  # Executes regardless of which servo is being controlled
          
     servo_1 = ServoPublisher(1, ["w", "s"])
     servo_2 = ServoPublisher(2)
     servo_3 = ServoPublisher(3)
     servo_4 = ServoPublisher(4)
     
-    # Adds all the publsihers of all instances of ServoPublisher.
     publishers = []
     for k, v in vars().copy().items():
         if isinstance(v, ServoPublisher):
             publishers.append(v._servo_angle_pub)
     
-    # Pre-notifies which servo is being controlled when initializing the program.
     idx = 1
     keyboarder.notify(str(idx), idx)
     
-    # Main loop
-    keyboarder.get_key()
+    rospy.spin()
     
     
     

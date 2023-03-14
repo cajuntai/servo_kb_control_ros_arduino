@@ -23,6 +23,10 @@ int16_t servo_angle1 = SERVOMIN;
 int16_t fake_servo_angle1 = SERVOMIN;
 int16_t servo_angle2 = SERVOMIN;
 int16_t fake_servo_angle2 = SERVOMIN;
+int16_t servo_angle3 = SERVOMIN;
+int16_t fake_servo_angle3 = SERVOMIN;
+int16_t servo_angle4 = SERVOMIN;
+int16_t fake_servo_angle4 = SERVOMIN;
 
 
 void servoCb1(const std_msgs::Int16& servo_1){
@@ -47,12 +51,34 @@ void servoCb2(const std_msgs::Int16& servo_2){
   fake_servo_angle2 = servo_angle2;
 }
 
+void servoCb3(const std_msgs::Int16& servo_3){
+  fake_servo_angle3 += servo_3.data;
+  
+  if (SERVOMIN < fake_servo_angle3 && fake_servo_angle3 < SERVOMAX) {
+    servo_angle3 += servo_3.data;
+    pwm.setPWM(2, 0, servo_angle3);
+  }
 
+  fake_servo_angle3 = servo_angle3;
+}
+
+void servoCb4(const std_msgs::Int16& servo_4){
+  fake_servo_angle4 += servo_4.data;
+  
+  if (SERVOMIN < fake_servo_angle4 && fake_servo_angle4 < SERVOMAX) {
+    servo_angle4 += servo_4.data;
+    pwm.setPWM(3, 0, servo_angle4);
+  }
+
+  fake_servo_angle4 = servo_angle4;
+}
 
 
 /* Subscribes to servo topic */
-ros::Subscriber<std_msgs::Int16> servo_1("servo_1", &servoCb1);
-ros::Subscriber<std_msgs::Int16> servo_2("servo_2", &servoCb2);
+ros::Subscriber<std_msgs::Int16> servo_1("diff_angle/servo_1", &servoCb1);
+ros::Subscriber<std_msgs::Int16> servo_2("diff_angle/servo_2", &servoCb2);
+ros::Subscriber<std_msgs::Int16> servo_3("diff_angle/servo_3", &servoCb3);
+ros::Subscriber<std_msgs::Int16> servo_4("diff_angle/servo_4", &servoCb4);
 
 
 void setup() {
@@ -71,6 +97,8 @@ void setup() {
   nh.initNode();
   nh.subscribe(servo_1);
   nh.subscribe(servo_2);
+  nh.subscribe(servo_3);
+  nh.subscribe(servo_4);
   
   delay(10);
 }

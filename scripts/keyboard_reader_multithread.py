@@ -14,8 +14,6 @@ import atexit
 import threading
 from select import select
 
-import rospy
-
 from observer import HasObservers
 
 
@@ -38,7 +36,13 @@ class KeyboardReader(HasObservers):
         # Set Ctrl + C signal for exiting thread
         if __name__ == "__main__":
             signal.signal(signal.SIGINT, self.sigint_handler)
-            self.get_key()
+        
+        # self._thread = threading.Thread(target=self.get_key)
+        # self._thread.daemon = True
+        # self._stop_thread = threading.Event()
+        
+        if __name__ == "__main__":
+            self._thread.start()
         
     # switch to normal terminal (used after exiting program, otherwise you won't see any input)
     def set_normal_term(self,):
@@ -64,15 +68,16 @@ class KeyboardReader(HasObservers):
         return dr
     
     def get_key(self):
-        while not rospy.is_shutdown():
+        while not self._stop_thread.is_set():
             if self.kbhit():
                 try:
                     self.getche()
                     
                     if self._ch == 'q':
                         print("q-key detected. Exiting program...")
-                        sys.exit(0)
-                        
+                        self.stop_event_thread()
+                        continue
+                    
                     self.notify_event_observers(self._ch, self._ch)
                 except Exception as e:
                     print(e)
@@ -82,12 +87,14 @@ class KeyboardReader(HasObservers):
     
     def sigint_handler(self, signum, frame):
         print("SIGINT: Exiting program...")
-        exit(0)
+        self.stop_event_thread()
 
 
 if __name__ == '__main__':
     kb = KeyboardReader()
     print("Keyboard reader thread started...")
     
+    import rospy
     rospy.init_node("keyoard_reader")
+    rospy.spin()
     
