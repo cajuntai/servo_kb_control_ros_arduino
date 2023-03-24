@@ -11,7 +11,7 @@
   </node>
   
  <!-- os_monitor node -->
- <node pkg="os_monitor" name="os_monitor" type="os__monitor.py" output='screen'>
+ <!--node pkg="os_monitor" name="os_monitor" type="os__monitor.py" output='screen'>
     <rosparam file="$(find os_monitor)/config/config.yaml" command="load"/>
- </node>
+ </node-->
 </launch>
